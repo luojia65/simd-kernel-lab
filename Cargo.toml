@@ -6,6 +6,11 @@ edition = "2018"
 
 [dependencies]
 bootloader = "0.3"
+volatile = "0.2"
+
+[dependencies.lazy_static]
+version = "1.2"
+features = ["spin_no_std"]
 
 [profile.dev]
 panic = "abort" 
