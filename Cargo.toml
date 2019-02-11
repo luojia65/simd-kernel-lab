@@ -5,4 +5,13 @@ authors = ["luojia65 <me@luojia.cc>"]
 edition = "2018"
 
 [dependencies]
+bootloader = "0.3"
 
+[profile.dev]
+panic = "abort" 
+
+[profile.release]
+panic = "abort" 
+
+[package.metadata.bootimage]
+default-target = "x86_64-simd_lab_os.json"
