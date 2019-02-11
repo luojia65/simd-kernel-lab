@@ -6,7 +6,8 @@ use core::fmt;
 lazy_static! {
     static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
         pos: 0,
-        buf: unsafe { &mut *(0xb8000 as *mut Buffer) }
+        buf: unsafe { &mut *(0xb8000 as *mut Buffer) },
+        color_code: 0
     });
 }
 
@@ -24,6 +25,7 @@ struct Buffer {
 
 struct Writer {
     pos: usize,
+    color_code: u8,
     buf: &'static mut Buffer,
 }
 
@@ -31,7 +33,7 @@ impl Writer {
     fn write_byte_unchecked(&mut self, byte: u8) {
         self.buf.chars[self.pos].write(ScreenChar {
             ascii_character: byte,
-            color_code: 13,
+            color_code: self.color_code,
         });
         self.pos += 1;
     } 
@@ -47,13 +49,13 @@ impl Writer {
             } 
             let blank = ScreenChar {
                 ascii_character: b' ',
-                color_code: 0, // not necessary
+                color_code: self.color_code, 
             };
             for j in 0..80 {
                 let index = 24 * 80 + j;
                 self.buf.chars[index].write(blank);
             }
-            self.pos = 24 * 80;
+            self.pos -= 80;
         }
     }
 
@@ -67,7 +69,7 @@ impl Writer {
 
     fn write_string(&mut self, s: &str) {
         for byte in s.bytes() {
-            self.write_byte(byte)
+            self.write_byte(byte);
         }
     }
 }
@@ -80,18 +82,32 @@ impl fmt::Write for Writer {
 }
 
 #[doc(hidden)]
-pub fn _print(args: fmt::Arguments) {
+pub fn _print(args: fmt::Arguments, color_code: u8) {
     use core::fmt::Write;
-    WRITER.lock().write_fmt(args).unwrap();
+    let mut writer = WRITER.lock();
+    writer.color_code = color_code;
+    writer.write_fmt(args).unwrap();
 }
 
 #[macro_export]
 macro_rules! print {
-    ($($arg:tt)*) => ($crate::vga::_print(format_args!($($arg)*)));
+    ($($arg:tt)*) => ($crate::vga::_print(format_args!($($arg)*), 14));
 }
 
 #[macro_export]
 macro_rules! println {
     () => ($crate::print!("\n"));
     ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
+}
+
+
+#[macro_export]
+macro_rules! eprint {
+    ($($arg:tt)*) => ($crate::vga::_print(format_args!($($arg)*), 4));
+}
+
+#[macro_export]
+macro_rules! eprintln {
+    () => ($crate::eprint!("\n"));
+    ($($arg:tt)*) => ($crate::eprint!("{}\n", format_args!($($arg)*)));
 }
