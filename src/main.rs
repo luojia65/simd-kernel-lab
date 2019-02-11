@@ -9,7 +9,9 @@ use core::panic::PanicInfo;
 #[cfg(not(test))]
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    println!("hello \n123\n456");
+    for i in 0..30 {
+        println!("{}", i);
+    }
     loop {}
 }
 

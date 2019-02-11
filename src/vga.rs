@@ -38,6 +38,23 @@ impl Writer {
 
     fn write_next_line(&mut self) {
         self.pos = (1 + self.pos / 80) * 80;
+        if self.pos >= 25 * 80 {
+            for i in 1..25 {
+                for j in 0..80 {
+                    let index = i * 80 + j;
+                    self.buf.chars[index - 80].write(self.buf.chars[index].read());
+                }
+            } 
+            let blank = ScreenChar {
+                ascii_character: b' ',
+                color_code: 0, // not necessary
+            };
+            for j in 0..80 {
+                let index = 24 * 80 + j;
+                self.buf.chars[index].write(blank);
+            }
+            self.pos = 24 * 80;
+        }
     }
 
     fn write_byte(&mut self, byte: u8) {
