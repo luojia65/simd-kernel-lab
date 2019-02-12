@@ -36,27 +36,34 @@ impl Writer {
             color_code: self.color_code,
         });
         self.pos += 1;
+        if self.pos % 80 == 0 {
+            self.shift_up()
+        }
     } 
 
     fn write_next_line(&mut self) {
         self.pos = (1 + self.pos / 80) * 80;
         if self.pos >= 25 * 80 {
-            for i in 1..25 {
-                for j in 0..80 {
-                    let index = i * 80 + j;
-                    self.buf.chars[index - 80].write(self.buf.chars[index].read());
-                }
-            } 
-            let blank = ScreenChar {
-                ascii_character: b' ',
-                color_code: self.color_code, 
-            };
-            for j in 0..80 {
-                let index = 24 * 80 + j;
-                self.buf.chars[index].write(blank);
-            }
-            self.pos -= 80;
+            self.shift_up()
         }
+    }
+
+    fn shift_up(&mut self) {
+        for i in 1..25 {
+            for j in 0..80 {
+                let index = i * 80 + j;
+                self.buf.chars[index - 80].write(self.buf.chars[index].read());
+            }
+        } 
+        let blank = ScreenChar {
+            ascii_character: b' ',
+            color_code: self.color_code, 
+        };
+        for j in 0..80 {
+            let index = 24 * 80 + j;
+            self.buf.chars[index].write(blank);
+        }
+        self.pos -= 80;
     }
 
     fn write_byte(&mut self, byte: u8) {
